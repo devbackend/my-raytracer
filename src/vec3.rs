@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Copy, Clone)]
 pub struct Vec3(f64, f64, f64);
@@ -13,7 +13,7 @@ impl Vec3 {
     }
 
     pub fn unit_vector(from: Self) -> Self {
-        from.div_diff(from.len())
+        from / (from.len() as f64)
     }
 
     pub fn dot(v1: Self, v2: Self) -> f64 {
@@ -42,14 +42,6 @@ impl Vec3 {
 
     pub fn b(&self) -> f64 {
         self.2
-    }
-
-    pub fn add_diff(&self, diff: f64) -> Self {
-        Self(self.0 * diff, self.1 * diff, self.2 * diff)
-    }
-
-    pub fn div_diff(&self, diff: f64) -> Self {
-        self.add_diff(1.0 / diff)
     }
 
     pub fn len(&self) -> f64 {
@@ -82,5 +74,21 @@ impl Sub for Vec3 {
 
     fn sub(self, v: Self) -> Self::Output {
         Vec3(self.0 - v.0, self.1 - v.1, self.2 - v.2)
+    }
+}
+
+impl Mul<f64> for Vec3 {
+    type Output = Self;
+
+    fn mul(self, diff: f64) -> Self::Output {
+        Self(self.0 * diff, self.1 * diff, self.2 * diff)
+    }
+}
+
+impl Div<f64> for Vec3 {
+    type Output = Self;
+
+    fn div(self, diff: f64) -> Self::Output {
+        self * (1.0 / diff)
     }
 }

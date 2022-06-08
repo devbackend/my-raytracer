@@ -20,6 +20,6 @@ impl Ray {
     }
 
     pub fn point_by(&self, diff: f64) -> Vec3 {
-        self.origin + self.direction.add_diff(diff)
+        self.origin + self.direction * diff
     }
 }
