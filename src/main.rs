@@ -1,10 +1,14 @@
+use crate::hittable::{HitRecord, Hittable};
+use crate::hittable_list::HittableList;
 use crate::ray::Ray;
+use crate::sphere::Sphere;
 use crate::vec3::Vec3;
 
 mod vec3;
 mod ray;
 mod hittable;
 mod sphere;
+mod hittable_list;
 
 fn main() {
     println!("{}", draw_pic(600, 300));
@@ -18,6 +22,13 @@ fn draw_pic(x: i32, y: i32) -> String {
     let mut res = String::new();
     res.push_str(format!("P3\n{} {}\n255\n", x, y).as_str());
 
+    let sph = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
+    let ground = Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0);
+
+    let mut world = HittableList::new();
+    world.add(Box::new(sph));
+    world.add(Box::new(ground));
+
     let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
     let horizontal = Vec3::new(4.0, 0.0, 0.0);
     let vertical = Vec3::new(0.0, 2.0, 0.0);
@@ -29,7 +40,7 @@ fn draw_pic(x: i32, y: i32) -> String {
             let v = j as f64 / y as f64;
 
             let r: Ray = Ray::new(origin, lower_left_corner + horizontal * u + vertical * v);
-            let col: Vec3 = color(r);
+            let col: Vec3 = color(r, &world);
 
             let ir: i32 = (255.99 * col.r()) as i32;
             let ig: i32 = (255.99 * col.g()) as i32;
@@ -42,31 +53,16 @@ fn draw_pic(x: i32, y: i32) -> String {
     return res;
 }
 
-fn color(r: Ray) -> Vec3 {
-    let t = hit_sphere(Vec3::new(0.0, 0.0, -1.0), 0.5, r.clone());
+fn color(r: Ray, world: &dyn Hittable) -> Vec3 {
+    let rec = world.hit(r, 0.0, f64::INFINITY);
 
-    if t > 0.0 {
-        let new_v = Vec3::unit_vector(r.point_by(t) - Vec3::new(0.0, 0.0, -1.0));
-        return Vec3::new(new_v.x() + 1.0, new_v.y() + 1.0, new_v.z() + 1.0) * 0.5;
+    if rec.get_is_hit() {
+        return (rec.get_normal() + Vec3::new_by_val(1.0)) * 0.5;
     }
 
     let unit_direction = Vec3::unit_vector(r.get_direction());
-    let t: f64 = 0.5 * (unit_direction.y() + 1.0);
 
-    Vec3::new_by_val(1.0) * (1.0 - t) + Vec3::new(0.2, 0.7, 1.0) * t
-}
+    let t = 0.5 * (unit_direction.y() + 1.0);
 
-fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
-    let v = r.get_origin() - center;
-
-    let a = r.get_direction().squared_len();
-    let half_b = Vec3::dot(v, r.get_direction());
-    let c = v.squared_len() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-
-    if discriminant < 0.0 {
-        return -1.0;
-    }
-
-    (half_b - discriminant.sqrt()) / a
+    Vec3::new_by_val(1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
