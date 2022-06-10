@@ -3,6 +3,8 @@ use crate::vec3::Vec3;
 
 mod vec3;
 mod ray;
+mod hittable;
+mod sphere;
 
 fn main() {
     println!("{}", draw_pic(600, 300));
@@ -26,7 +28,7 @@ fn draw_pic(x: i32, y: i32) -> String {
             let u = i as f64 / x as f64;
             let v = j as f64 / y as f64;
 
-            let r: Ray = Ray::new(origin, lower_left_corner + horizontal* u + vertical * v);
+            let r: Ray = Ray::new(origin, lower_left_corner + horizontal * u + vertical * v);
             let col: Vec3 = color(r);
 
             let ir: i32 = (255.99 * col.r()) as i32;
@@ -57,15 +59,14 @@ fn color(r: Ray) -> Vec3 {
 fn hit_sphere(center: Vec3, radius: f64, r: Ray) -> f64 {
     let v = r.get_origin() - center;
 
-    let a = Vec3::dot(r.get_direction(), r.get_direction());
-    let b = 2.0 * Vec3::dot(v, r.get_direction());
-    let c = Vec3::dot(v, v) - radius * radius;
-
-    let discriminant = b * b - 4.0 * a * c;
+    let a = r.get_direction().squared_len();
+    let half_b = Vec3::dot(v, r.get_direction());
+    let c = v.squared_len() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
 
     if discriminant < 0.0 {
         return -1.0;
     }
 
-    (-b - discriminant.sqrt()) / (2.0 * a)
+    (half_b - discriminant.sqrt()) / a
 }
