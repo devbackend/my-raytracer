@@ -1,5 +1,7 @@
 use std::ops::{Add, Div, Mul, Sub};
 
+use rand::Rng;
+
 #[derive(Copy, Clone)]
 pub struct Vec3(f64, f64, f64);
 
@@ -14,6 +16,16 @@ impl Vec3 {
 
     pub fn unit_vector(from: Self) -> Self {
         from / (from.len() as f64)
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        let mut v = Self::new(rand::thread_rng().gen::<f64>(), rand::thread_rng().gen::<f64>(), rand::thread_rng().gen::<f64>()) * 2.0 - Self::new_by_val(1.0);
+
+        while v.squared_len() >= 1.0 {
+            v = Self::new(rand::thread_rng().gen::<f64>(), rand::thread_rng().gen::<f64>(), rand::thread_rng().gen::<f64>()) * 2.0 - Self::new_by_val(1.0)
+        }
+
+        return v;
     }
 
     pub fn dot(v1: Self, v2: Self) -> f64 {

@@ -55,6 +55,7 @@ fn draw_pic(x: i32, y: i32) -> String {
             }
 
             col = col / ns as f64;
+            col = Vec3::new(col.r().sqrt(), col.g().sqrt(), col.b().sqrt());
 
             let ir: i32 = (255.99 * col.r()) as i32;
             let ig: i32 = (255.99 * col.g()) as i32;
@@ -68,10 +69,11 @@ fn draw_pic(x: i32, y: i32) -> String {
 }
 
 fn color(r: Ray, world: &dyn Hittable) -> Vec3 {
-    let rec = world.hit(r, 0.0, f64::INFINITY);
+    let rec = world.hit(r, 0.001, f64::INFINITY);
 
     if rec.get_is_hit() {
-        return (rec.get_normal() + Vec3::new_by_val(1.0)) * 0.5;
+        let target = rec.get_point() + rec.get_normal() + Vec3::random_in_unit_sphere();
+        return color(Ray::new(rec.get_point(), target - rec.get_point()), world) * 0.5;
     }
 
     let unit_direction = Vec3::unit_vector(r.get_direction());
