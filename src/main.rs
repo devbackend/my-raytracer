@@ -1,3 +1,6 @@
+use rand::Rng;
+
+use crate::camera::Camera;
 use crate::hittable::{HitRecord, Hittable};
 use crate::hittable_list::HittableList;
 use crate::ray::Ray;
@@ -9,12 +12,15 @@ mod ray;
 mod hittable;
 mod sphere;
 mod hittable_list;
+mod camera;
 
 fn main() {
     println!("{}", draw_pic(600, 300));
 }
 
 fn draw_pic(x: i32, y: i32) -> String {
+    let ns = 100;
+
     if x < 1 || y < 1 {
         panic!("bad size")
     }
@@ -29,18 +35,26 @@ fn draw_pic(x: i32, y: i32) -> String {
     world.add(Box::new(sph));
     world.add(Box::new(ground));
 
-    let lower_left_corner = Vec3::new(-2.0, -1.0, -1.0);
-    let horizontal = Vec3::new(4.0, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, 2.0, 0.0);
-    let origin = Vec3::new(0.0, 0.0, 0.0);
+    let cam: Camera = Camera::new(
+        Vec3::new(0.0, 0.0, 0.0),
+        Vec3::new(-2.0, -1.0, -1.0),
+        Vec3::new(4.0, 0.0, 0.0),
+        Vec3::new(0.0, 2.0, 0.0),
+    );
 
     for j in (0..y).rev() {
         for i in 0..x {
-            let u = i as f64 / x as f64;
-            let v = j as f64 / y as f64;
+            let mut col = Vec3::new_by_val(0.0);
+            for _ in 0..ns {
+                let u = (i as f64 + rand::thread_rng().gen::<f64>()) / x as f64;
+                let v = (j as f64 + rand::thread_rng().gen::<f64>()) / y as f64;
 
-            let r: Ray = Ray::new(origin, lower_left_corner + horizontal * u + vertical * v);
-            let col: Vec3 = color(r, &world);
+                let r: Ray = cam.get_ray(u, v);
+
+                col = col + color(r, &world);
+            }
+
+            col = col / ns as f64;
 
             let ir: i32 = (255.99 * col.r()) as i32;
             let ig: i32 = (255.99 * col.g()) as i32;
