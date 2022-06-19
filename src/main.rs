@@ -3,6 +3,8 @@ use rand::Rng;
 use crate::camera::Camera;
 use crate::hittable::{HitRecord, Hittable};
 use crate::hittable_list::HittableList;
+use crate::lambertian::Lambertian;
+use crate::metal::Metal;
 use crate::ray::Ray;
 use crate::sphere::Sphere;
 use crate::vec3::Vec3;
@@ -13,6 +15,9 @@ mod hittable;
 mod sphere;
 mod hittable_list;
 mod camera;
+mod material;
+mod lambertian;
+mod metal;
 
 fn main() {
     println!("{}", draw_pic(600, 300));
@@ -28,12 +33,11 @@ fn draw_pic(x: i32, y: i32) -> String {
     let mut res = String::new();
     res.push_str(format!("P3\n{} {}\n255\n", x, y).as_str());
 
-    let sph = Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5);
-    let ground = Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0);
-
     let mut world = HittableList::new();
-    world.add(Box::new(sph));
-    world.add(Box::new(ground));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5, Box::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))));
+    world.add(Box::new(Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5, Box::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.7)))));
+    world.add(Box::new(Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5, Box::new(Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.3)))));
+    world.add(Box::new(Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0, Box::new(Lambertian::new(Vec3::new(0.8, 0.8, 0.0))))));
 
     let cam: Camera = Camera::new(
         Vec3::new(0.0, 0.0, 0.0),
@@ -51,7 +55,7 @@ fn draw_pic(x: i32, y: i32) -> String {
 
                 let r: Ray = cam.get_ray(u, v);
 
-                col = col + color(r, &world);
+                col = col + Vec3::color(r, &world, 0);
             }
 
             col = col / ns as f64;
@@ -66,19 +70,4 @@ fn draw_pic(x: i32, y: i32) -> String {
     }
 
     return res;
-}
-
-fn color(r: Ray, world: &dyn Hittable) -> Vec3 {
-    let rec = world.hit(r, 0.001, f64::INFINITY);
-
-    if rec.get_is_hit() {
-        let target = rec.get_point() + rec.get_normal() + Vec3::random_in_unit_sphere();
-        return color(Ray::new(rec.get_point(), target - rec.get_point()), world) * 0.5;
-    }
-
-    let unit_direction = Vec3::unit_vector(r.get_direction());
-
-    let t = 0.5 * (unit_direction.y() + 1.0);
-
-    Vec3::new_by_val(1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }

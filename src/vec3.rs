@@ -2,8 +2,12 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use rand::Rng;
 
+use crate::{Hittable, Ray};
+
 #[derive(Copy, Clone)]
 pub struct Vec3(f64, f64, f64);
+
+const MAX_DEPTH: i32 = 50;
 
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
@@ -28,8 +32,37 @@ impl Vec3 {
         return v;
     }
 
+    pub fn reflect(v: Self, n: Self) -> Self {
+        v - n * Self::dot(v, n) * 2.0
+    }
+
     pub fn dot(v1: Self, v2: Self) -> f64 {
         v1.0 * v2.0 + v1.1 * v2.1 + v1.2 * v2.2
+    }
+
+    pub fn color(r: Ray, world: &dyn Hittable, depth: i32) -> Vec3 {
+        let rec = world.hit(r, 0.001, f64::INFINITY);
+
+        if !rec.get_is_hit() {
+            let unit_direction = Self::unit_vector(r.get_direction());
+            let t = 0.5 * (unit_direction.y() + 1.0);
+
+            return Self::new_by_val(1.0) * (1.0 - t) + Self::new(0.5, 0.7, 1.0) * t;
+        }
+
+        if depth >= MAX_DEPTH {
+            return Vec3::new_by_val(0.0);
+        }
+
+        let m = rec.get_material();
+
+        let scatter = m.scatter(r, &rec);
+
+        if !scatter.get_is_scattered() {
+            return Vec3::new_by_val(0.0);
+        }
+
+        scatter.get_attenuation() * Self::color(scatter.get_scatter_ray(), world, depth + 1)
     }
 
     pub fn x(&self) -> f64 {

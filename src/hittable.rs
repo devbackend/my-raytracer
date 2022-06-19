@@ -1,12 +1,13 @@
 use crate::{Ray, Vec3};
+use crate::material::{DefaultMaterial, Material};
 
-#[derive(Clone, Copy)]
 pub struct HitRecord {
     point: Vec3,
     normal: Vec3,
     t: f64,
     is_hit: bool,
     is_front_face: bool,
+    material: Box<dyn Material>,
 }
 
 pub trait Hittable {
@@ -21,6 +22,7 @@ impl HitRecord {
             t: 0.0,
             is_hit: false,
             is_front_face: false,
+            material: Box::new(DefaultMaterial::new()),
         }
     }
 
@@ -56,13 +58,21 @@ impl HitRecord {
         self.normal = normal;
     }
 
+    pub fn get_material(&self) -> &Box<dyn Material> {
+        &self.material
+    }
+
+    pub fn set_material(&mut self, material: Box<dyn Material>) {
+        self.material = material;
+    }
+
     pub fn calc_normal_and_fron_face(&mut self, r: Ray, normal: Vec3) {
         self.is_front_face = Vec3::dot(r.get_direction(), normal) < 0.0;
 
-        if self.is_front_face {
-            self.normal = normal;
-        } else {
-            self.normal = normal * -1.0;
+        self.normal = normal;
+
+        if !self.is_front_face {
+            self.normal = self.normal * -1.0;
         }
     }
 }

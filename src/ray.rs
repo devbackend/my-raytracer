@@ -8,7 +8,14 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Ray {
-        Ray { origin, direction }
+        Self { origin, direction }
+    }
+
+    pub fn default() -> Self {
+        Self {
+            origin: Vec3::new_by_val(0.0),
+            direction: Vec3::new_by_val(0.0),
+        }
     }
 
     pub fn get_origin(&self) -> Vec3 {
